@@ -1,20 +1,22 @@
 # Terraform working directories
-
 **/.terraform/*
 
 # Terraform state
 *.tfstate
 *.tfstate.*
 
-# Saved terraform plans
-*.tfplans
+# Local variable values
+*.tfvars
+!*.tfvars.example
+
+# Saved Terraform plans
+*.tfplan
+tfplan
 
 # Crash logs
-
 crash.log
 crash.*.log
 
 # Terraform CLI config
-
 .terraformrc
 terraform.rc
