@@ -1,0 +1,6 @@
+account_id      = "your-cloudflare-account-id"
+domain_name     = "example.com"
+
+database_name   = "swimrankings"
+d1_binding_name = "SWIMRANKINGS_DB"
+worker_name     = "swimrankings-worker"
