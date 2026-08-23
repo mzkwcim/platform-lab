@@ -6,7 +6,7 @@ terraform {
       version = "~> 5.23"
     }
     http = {
-      source  = hashicorp / http
+      source  = "hashicorp/http"
       version = "~> 3.6"
     }
   }
