@@ -4,8 +4,8 @@ variable "zone_id" {
 }
 
 variable "domain_name" {
-    type = string
-    description = "My domain"
+  type        = string
+  description = "My domain"
 }
 
 variable "dns_records" {
