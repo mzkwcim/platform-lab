@@ -25,7 +25,7 @@ env:
   KEY: ${{ vars.KEY }}
 
 jobs:
-  azure_oidc_test:
+  terraform_plan:
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -76,6 +76,9 @@ jobs:
           -backend-config "key=${{ vars.KEY }}"
 
       - name: "terraform plan"
-        run: terraform plan 
+        run: terraform plan -out=tfplan
+
+      - name: "terraform show"
+        run: terraform show -no-color tfplan > plan.txt
 
       
