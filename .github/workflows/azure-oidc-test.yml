@@ -69,13 +69,13 @@ jobs:
               --auth-mode login
 
       - name: "Init terraform"
-        run: terraform init \
+        run: |
+          terraform init \
           -backend-config "storage_account_name=${{ vars.storage_account_name }}" \
           -backend-config "container_name=${{ vars.TF_STATE_CONTAINER_NAME }}" \
           -backend-config "key=${{ vars.KEY }}"
 
       - name: "terraform plan"
-        run: |
-          terraform plan 
+        run: terraform plan 
 
       
