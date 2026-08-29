@@ -24,14 +24,14 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: "Azure show account - Auth proof"
+      - name: "Azure show account"
         uses: azure/cli@v2
         with:
           azcliversion: latest
           inlineScript:
             az account show
 
-      - name: "Azure storage account list - not authorized proof"
+      - name: "Azure storage account list"
         uses: azure/cli@v2
         with:
           azcliversion: latest
@@ -43,4 +43,4 @@ jobs:
         with:
           azcliversion: latest
           inlineScript:
-            az storage container show --name satflabmzkwcim01 --account-name platform-lab-github-plan --auth-mode login
+            az storage container show --name platform-lab-github-plan --account-name satflabmzkwcim01 --auth-mode login
