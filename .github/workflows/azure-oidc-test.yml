@@ -43,4 +43,7 @@ jobs:
         with:
           azcliversion: latest
           inlineScript:
-            az storage container show --name tfstate --account-name satflabmzkwcim01 --auth-mode login
+            az storage container show \
+              --name ${{ vars.TF_STATE_CONTAINER_NAME}} \
+              --account-name ${{ vars.STORAGE_ACCOUNT_NAME}} \
+              --auth-mode login
