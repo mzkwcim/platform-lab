@@ -76,9 +76,101 @@ jobs:
           -backend-config "key=${{ vars.KEY }}"
 
       - name: "terraform plan"
-        run: terraform plan -out=tfplan
+        id: plan
+        run: |
+          set +e
+          terraform plan -out=tfplan -detailed-exitcode
+          PLAN_EXIT_CODE=$?
+          set -e
+
+          if [ "$PLAN_EXIT_CODE" -eq 1 ]; then
+            echo "Terraform plan failed"
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+            exit 1
+          fi
+
+          if [ "$PLAN_EXIT_CODE" -eq 2 ]; then
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+          elif [ "$PLAN_EXIT_CODE" -gt 2 ]; then
+            echo "has_changes=unexpected error" >> "$GITHUB_OUTPUT"
+          else 
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+          fi
+          echo "exitcode=$PLAN_EXIT_CODE" >> "$GITHUB_OUTPUT"
+
 
       - name: "terraform show"
-        run: terraform show -no-color tfplan > plan.txt
+        run: |
+          terraform show -no-color tfplan > plan.txt
+          terraform show -json tfplan > plan.json
 
-      
+      - name: "Count changes"
+        id: count_changes
+        run: |
+          echo "create_count=$(jq '[.resource_changes[]
+            | select(.change.actions == ["create"])
+            ] | length' plan.json)" >> "$GITHUB_OUTPUT"
+
+          echo "update_count=$(jq '[.resource_changes[]
+            | select(.change.actions == ["update"])
+            ] | length' plan.json)" >> "$GITHUB_OUTPUT"
+
+          echo "delete_count=$(jq '[.resource_changes[]
+            | select(.change.actions == ["delete"])
+            ] | length' plan.json)" >> "$GITHUB_OUTPUT"
+
+          echo "replace_count=$(jq '[.resource_changes[]
+            | select(
+                .change.actions == ["delete","create"]
+                or
+                .change.actions == ["create","delete"]
+              )
+            ] | length' plan.json)" >> "$GITHUB_OUTPUT"
+
+      - name: "Build comment"
+        id: build_comment
+        env:
+          PLAN_EXIT_CODE: ${{ steps.plan.outputs.exitcode }}
+          HAS_CHANGES: ${{ steps.plan.outputs.has_changes }}
+          CREATE_COUNT: ${{ steps.count_changes.outputs.create_count }}
+          UPDATE_COUNT: ${{ steps.count_changes.outputs.update_count }}
+          DELETE_COUNT: ${{ steps.count_changes.outputs.delete_count }}
+          REPLACE_COUNT: ${{ steps.count_changes.outputs.replace_count }}
+        run: |
+          if [ "$PLAN_EXIT_CODE" -eq 0 ]; then
+            status="Success - no changes"
+          elif [ "$PLAN_EXIT_CODE" -eq 1 ]; then
+            status="Failed"
+          elif [ "$PLAN_EXIT_CODE" -eq 2 ]; then
+            status="Success - changes to review"
+          else
+            status="Failed with unexpected error"
+          fi
+
+          changes=""
+
+          if [ "$HAS_CHANGES" = "true" ]; then
+            changes="$(cat plan.txt)"
+          fi
+
+          cat <<EOF > comment.md
+          ## Terraform Plan
+
+          Status: $status
+
+          Creates: $CREATE_COUNT
+          Updates: $UPDATE_COUNT
+          Deletes: $DELETE_COUNT
+          Replacements: $REPLACE_COUNT
+
+          <details>
+          <summary>Show full plan</summary>
+
+          \`\`\`text
+          $changes
+          \`\`\`
+
+          </details>
+          EOF
+
+          cat comment.md
